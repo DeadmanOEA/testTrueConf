@@ -1,0 +1,5 @@
+﻿  MainForm.cpp
+C:\Users\Deadman97\source\repos\testTrueConf\TestProg\TestProg\MainForm.h(257,22): warning C4101: e: неиспользованная локальная переменная
+C:\Users\Deadman97\source\repos\testTrueConf\TestProg\TestProg\MainForm.cpp(10,1): warning C4829: Возможно, неправильные параметры функции main. Рекомендуемый вариант - "int main(Platform::Array<Platform::String^>^ argv)"
+  MainForm.obj : обнаружен модуль MSIL; для MSIL последовательная компоновка отключена; выполняется полная компоновка
+  TestProg.vcxproj -> C:\Users\Deadman97\source\repos\testTrueConf\TestProg\x64\Debug\TestProg.exe
