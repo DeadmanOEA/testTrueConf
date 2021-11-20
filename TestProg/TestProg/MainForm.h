@@ -2,8 +2,10 @@
 
 #include <map>
 #include <string>
+#include <vector>
 #include <tuple>
 #include <msclr\marshal_cppstd.h>
+#include <stdio.h>
 
 
 
@@ -173,7 +175,9 @@ namespace TestProg {
 		/*Функция открытия и чтения файла*/
 		private: System::Void openBut_Click(System::Object^ sender, System::EventArgs^ e)
 		{
-			/*Чтение*/
+			/*Чтение c файла*/
+			catTB->Text = "";
+			outTB->Text = "";
 			String^ FileName = "";
 			OpenFileDialog^ openFD = gcnew OpenFileDialog;
 			openFD->InitialDirectory = "c:\\";
@@ -187,29 +191,149 @@ namespace TestProg {
 			try
 			{
 				StreamReader^ file = File::OpenText(FileName);
-
 				String^ str = "";
 				catTB->Text = file->ReadToEnd();
+				file->Close();
 				str = catTB->Text;
-				std::map < std::string, std::string > fmap;
-
+				std::map < std::string,std::string > fmap;
+				std::vector < std::string > fvector;//храним порядок записи
 				String^ key;
 				String^ val;
 				String^ val0 = "";
-
+				String^ fkeyzero;
+				//считываем элементы и преобразовываем
 				for (int i = 0; i < str->Length; i++)
 				{
 					if (str[i] != ' ')
 					{
 						if (str[i] == '\r')
 						{
-							String^ fkeyzero;
+							
 							if (fmap.size() != 0)
 							{
-								String^ fkey1 = marshal_as<String^>(fmap.begin()->first);
+								String^ fkey1 = fkeyzero;
 								String^ fkey2 = key;
 								String^ fkeynull;
-								fkeyzero = fkey1;
+								
+								int yes = 0;//проверка идентичности ключа
+
+								for (int i = 0; i < fkey2->Length; i++)
+								{
+									for (int j = 0; j < fkey1->Length; j++)
+									{
+										if (fkey2[i] == fkey1[j])
+										{
+											for (int f = 0; f < fkey1->Length; f++)
+											{
+												if (f != j) fkeynull += fkey1[f];
+											}
+											fkey1 = fkeynull;
+											yes++;
+											break;
+										}
+									}
+								}
+								//что делать после проверки ключа добавить запись или объединить
+								if (yes == marshal_as<String^>(fmap.begin()->first)->Length)
+								{
+									auto it = fmap.find(marshal_as<std::string>(fkeyzero));
+									String^ line = marshal_as<String^>(it->second);
+									std::string x;
+									std::string y = marshal_as<std::string>(val);
+									String^ nline;
+									int last = 0;
+									//перезаписываем параметр у совпадающего ключа
+									for (int i = 0; i < line->Length; i++)
+									{
+										if (line->Length == 1) nline += line[i];
+										if (line[i] == '/')
+										{
+											x = marshal_as<std::string>(nline);
+											if (x > y)
+											{
+												if (last == 0)
+												{
+													val += "/" + line;
+												}
+												else
+												{
+													String^ nline2;
+													String^ nline3;
+													for (int j = 0; j < last; j++)
+													{
+														nline2 += line[j];
+													}
+													for (int j = last; j < line->Length; j++)
+													{
+														nline3 += line[j];
+													}
+
+													val = nline2 + "/" + val + "/" + nline3;
+												}
+											}
+											else nline = val0;
+											
+		
+											last = i;
+										}
+										else if (i == (line->Length - 1))
+										{
+											nline += line[i];
+											x = marshal_as<std::string>(nline);
+											if (x > y)
+											{
+												if (last == 0)
+												{
+													val += "/" + line;
+												}
+												else 
+												{
+													String^ nline2;
+													for (int j = 0; j < last; j++)
+													{
+														nline2 += line[j];
+													}
+
+													val = nline2 + "/" + val + "/" + nline;
+												}
+											}
+											else
+											{
+												val = line + "/" + val;
+											}
+										}
+										else
+											nline += line[i];
+									}
+
+									fmap.at(marshal_as<std::string>(fkeyzero)).assign(marshal_as<std::string>(val));
+
+								}
+								else
+								{
+									fvector.push_back(marshal_as<std::string>(key));
+									fmap.insert(std::pair<std::string, std::string>(marshal_as<std::string>(key), marshal_as<std::string>(val)));
+								}
+									
+							}
+							else
+							{
+								fkeyzero = key;
+								fvector.push_back(marshal_as<std::string>(key));
+								fmap.insert(std::pair<std::string, std::string>(marshal_as<std::string>(key), marshal_as<std::string>(val)));
+							}
+
+							val = val0;
+						}
+						else if (str[i] != '\n') 
+							val += str[i];
+						if (i == (str->Length-1))
+						{
+							if (fmap.size() != 0)
+							{
+								String^ fkey1 = fkeyzero;
+								String^ fkey2 = key;
+								String^ fkeynull;
 								int yes = 0;
 
 								for (int i = 0; i < fkey2->Length; i++)
@@ -231,18 +355,95 @@ namespace TestProg {
 
 								if (yes == marshal_as<String^>(fmap.begin()->first)->Length)
 								{
-									
-									fmap.insert(std::pair<std::string, std::string>(marshal_as<std::string>(fkeyzero), marshal_as<std::string>(val)));
+									auto it = fmap.find(marshal_as<std::string>(fkeyzero));
+									String^ line = marshal_as<String^>(it->second);
+									std::string x;
+									std::string y = marshal_as<std::string>(val);
+									String^ nline;
+									int last = 0;
+
+									for (int i = 0; i < line->Length; i++)
+									{
+										if (line->Length == 1) nline += line[i];
+										if (line[i] == '/')
+										{
+											x = marshal_as<std::string>(nline);
+											if (x > y)
+											{
+												if (last == 0)
+												{
+													val += "/" + line;
+												}
+												else
+												{
+													String^ nline2;
+													String^ nline3;
+													for (int j = 0; j < last; j++)
+													{
+														nline2 += line[j];
+													}
+													for (int j = last; j < line->Length; j++)
+													{
+														nline3 += line[j];
+													}
+
+													val = nline2 + "/" + val + "/" + nline3;
+												}
+											}
+											else nline = val0;
+											
+
+											last = i;
+										}
+										else if (i == (line->Length - 1))
+										{
+											nline += line[i];
+											
+											x = marshal_as<std::string>(nline);
+											if (x > y)
+											{
+												if (last == 0)
+												{
+													val += "/" + line;
+												}
+												else
+												{
+													String^ nline2;
+													for (int j = 0; j < last; j++)
+													{
+														nline2 += line[j];
+													}
+
+													val = nline2 + "/" + val + "/" + nline;
+												}
+											}
+											else
+											{
+												val = line + "/" + val;
+											}
+										}
+										else
+											nline += line[i];
+									}
+
+									fmap.at(marshal_as<std::string>(fkeyzero)).assign(marshal_as<std::string>(val));
+									///////////////
 
 								}
-								else fmap.insert(std::pair<std::string, std::string>(marshal_as<std::string>(key), marshal_as<std::string>(val)));
-							}
-							else fmap.insert(std::pair<std::string, std::string>(marshal_as<std::string>(key), marshal_as<std::string>(val)));
+								else
+								{
+									fvector.push_back(marshal_as<std::string>(key));
+									fmap.insert(std::pair<std::string, std::string>(marshal_as<std::string>(key), marshal_as<std::string>(val)));
 
-							val = val0;
+								}
+							}
+							else
+							{
+								fkeyzero = key;
+								fvector.push_back(marshal_as<std::string>(key));
+								fmap.insert(std::pair<std::string, std::string>(marshal_as<std::string>(key), marshal_as<std::string>(val)));
+							}
 						}
-						else if (str[i] != '\n') val += str[i];
-						if (i == str->Length) fmap.insert(std::pair<std::string, std::string>(marshal_as<std::string>(key), marshal_as<std::string>(val)));
 					}
 					else if (str[i] == ' ')
 					{
@@ -250,11 +451,24 @@ namespace TestProg {
 						val = val0;
 					}	
 				}
+				//убираем лишние элементы
+				auto it = fmap.find(marshal_as<std::string>(fkeyzero));
+				String^ line = marshal_as<String^>(it->second);
+				String^ nline;
+				for (int i = 0; i < line->Length; i++)
+					if (line[i] != '/')
+						nline += line[i];
+				fmap.at(marshal_as<std::string>(fkeyzero)).assign(marshal_as<std::string>(nline));
 
-				for (auto it = fmap.begin(); it != fmap.end(); ++it)
+
+				for (int i = 0; i < fvector.size(); i++)
 				{
-					outTB->Text += marshal_as<String^>(it->first)  + " " + marshal_as<String^>(it->second) + "\r" + "\n";
+					auto fn = fmap.find(fvector[i]);
+					outTB->Text += marshal_as<String^>(fn->first)  + " " + marshal_as<String^>(fn->second) + "\r" + "\n";
 				}
+				File::WriteAllText(FileName, outTB->Text);
+				
+
 			}
 			catch (Exception^ e)
 			{
